@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cv-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "--port", "3333", "--no-clipboard"],
+      "port": 3333
+    }
+  ]
+}

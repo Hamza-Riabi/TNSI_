@@ -1,0 +1,49 @@
+description = "Génère un CV PDF ATS-optimisé adapté à une offre d'emploi."
+
+prompt = """
+Tu es un expert RH francophone. Tu vas générer un CV PDF personnalisé pour une offre d'emploi.
+
+URL ou description de l'offre :
+$ARGUMENTS
+
+## ÉTAPE 1 — Charger le contexte (obligatoire)
+
+Lis ces fichiers dans cet ordre avant toute autre action :
+- modes/_shared.md
+- modes/pdf.md
+- cv.md
+- config/profile.yml
+- modes/_profile.md
+- templates/cv-template.html
+
+## ÉTAPE 2 — Récupérer la fiche de poste (RÈGLE STRICTE)
+
+**Si $ARGUMENTS est une URL :**
+
+Tu DOIS exécuter cette commande Bash en premier, AVANT WebFetch, AVANT GoogleSearch :
+
+```bash
+node fetch-jd.mjs $ARGUMENTS
+```
+
+Ce script utilise Playwright (navigateur headless) et contourne les protections anti-bot de LinkedIn, Glassdoor et autres portails. Il retourne le texte brut de l'offre sur stdout.
+
+- Si le script retourne du texte (> 100 caractères) → utilise ce texte comme fiche de poste
+- Si le script échoue ou retourne vide → alors essaie WebFetch
+- Ne jamais demander à l'utilisateur de coller le texte tant que node fetch-jd.mjs n'a pas été exécuté
+
+**Si $ARGUMENTS est du texte (pas une URL) :** utilise-le directement comme fiche de poste.
+
+## ÉTAPE 3 — Générer le CV
+
+1. Extrait 15-20 mots-clés du JD
+2. Détecte l'archétype du rôle (Data Analyst / BA / Chef de projet / Data Engineer)
+3. Adapte le CV selon modes/pdf.md — sans jamais inventer d'expérience ou compétence
+4. Génère le HTML complet en remplissant tous les {{PLACEHOLDERS}} du template
+5. Écris le HTML dans un fichier temporaire
+6. Exécute :
+```bash
+node generate-pdf.mjs <chemin_html> output/cv-hamza-riabi-<entreprise>-<YYYY-MM-DD>.pdf --format=a4
+```
+7. Rapporte : chemin du PDF, nombre de pages, mots-clés injectés
+"""

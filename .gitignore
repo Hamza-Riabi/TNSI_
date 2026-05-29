@@ -1,0 +1,14 @@
+# Secrets
+.env
+.env.local
+
+# Dépendances
+node_modules/
+
+# Fichiers générés
+output/
+preview.html
+apply-task.json
+
+# Logs
+*.log

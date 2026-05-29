@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cv-gen — Générateur de CV</title>
+<style>
+  :root {
+    --cyan:   hsl(187, 74%, 32%);
+    --purple: hsl(270, 70%, 45%);
+    --bg:     #f8f9fc;
+    --card:   #ffffff;
+    --text:   #1a1a2e;
+    --muted:  #666;
+    --border: #e2e2e2;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--cyan), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+
+  header p { color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
+
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 60%;
+    width: 80%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+
+  .step.active:not(:last-child)::after,
+  .step.done:not(:last-child)::after { background: var(--cyan); }
+
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    position: relative; z-index: 1;
+    transition: background 0.3s;
+  }
+
+  .step.active .step-dot  { background: var(--cyan); }
+  .step.done .step-dot    { background: var(--purple); }
+
+  .step-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .step.active .step-label { color: var(--cyan); font-weight: 600; }
+  .step.done .step-label   { color: var(--purple); }
+
+  /* Form */
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    color: var(--text);
+  }
+
+  input[type="text"]:focus { border-color: var(--cyan); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-primary { background: var(--cyan); color: #fff; }
+  .btn-purple  { background: var(--purple); color: #fff; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* Progress log */
+  .log {
+    background: #f4f6f8;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 60px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  /* CV Preview */
+  .preview-box {
+    background: #fafafa;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    max-height: 480px;
+    overflow-y: auto;
+    color: #2a2a2a;
+  }
+
+  /* Success */
+  .success-icon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .success-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--purple);
+    margin-bottom: 6px;
+  }
+
+  .success-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .question {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .applied-msg {
+    text-align: center;
+    color: var(--cyan);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px;
+    background: hsl(187, 40%, 95%);
+    border-radius: 8px;
+  }
+
+  .result-box {
+    text-align: center;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .result-box.success { color: var(--cyan); background: hsl(187,40%,95%); }
+  .result-box.pending { color: hsl(38,90%,40%); background: hsl(38,90%,95%); }
+  .result-box.error   { color: #c0392b; background: #fdf0ef; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>cv-gen</h1>
+  <p>Génère un CV PDF ATS-optimisé adapté à ton offre d'emploi</p>
+</header>
+
+<!-- Steps -->
+<div class="steps">
+  <div class="step active" id="s1">
+    <div class="step-dot">1</div>
+    <div class="step-label">Offre</div>
+  </div>
+  <div class="step" id="s2">
+    <div class="step-dot">2</div>
+    <div class="step-label">Aperçu CV</div>
+  </div>
+  <div class="step" id="s3">
+    <div class="step-dot">3</div>
+    <div class="step-label">PDF</div>
+  </div>
+</div>
+
+<!-- Étape 1 : URL -->
+<div class="card" id="step1">
+  <label for="jobUrl">URL de l'offre d'emploi</label>
+  <input type="text" id="jobUrl" placeholder="https://www.welcometothejungle.com/fr/companies/..." />
+
+  <div style="margin-top:10px;">
+    <button onclick="togglePasteMode()" style="background:none;border:none;color:var(--cyan);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">
+      ✏️ Coller le texte de l'offre à la place
+    </button>
+  </div>
+
+  <!-- Zone de collage manuelle (masquée par défaut) -->
+  <div id="pasteZone" class="hidden" style="margin-top:12px;">
+    <label for="jdText">Texte de l'offre d'emploi</label>
+    <textarea id="jdText"
+      placeholder="Colle ici le contenu complet de l'offre..."
+      style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;resize:vertical;min-height:140px;font-family:inherit;outline:none;color:var(--text);"
+    ></textarea>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btnGenerate" onclick="startGeneration()">
+      ✨ Adapter le CV
+    </button>
+  </div>
+  <div style="margin-top:16px;">
+    <div class="log" id="log" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Étape 2 : Aperçu -->
+<div class="card hidden" id="step2">
+  <label>Aperçu du CV adapté</label>
+  <div class="preview-box" id="preview"></div>
+  <div class="btn-row">
+    <button class="btn btn-purple" id="btnPdf" onclick="generatePdf()">
+      📄 Générer le PDF
+    </button>
+    <button class="btn btn-outline" onclick="toggleModify()">
+      ✏️ Modifier
+    </button>
+    <button class="btn btn-outline" onclick="resetToStep1()">
+      ← Recommencer
+    </button>
+  </div>
+
+  <!-- Zone de modification -->
+  <div id="modifyZone" class="hidden" style="margin-top:16px;">
+    <label for="modifyInput" style="margin-bottom:8px;">Que veux-tu modifier ?</label>
+    <textarea id="modifyInput"
+      placeholder="Ex: Mets plus en avant les compétences SQL dans l'expérience Renault. Remplace le projet ETL par le projet HDFS."
+      style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;resize:vertical;min-height:90px;font-family:inherit;outline:none;color:var(--text);"
+    ></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnModify" onclick="applyModification()">
+        ✨ Appliquer les modifications
+      </button>
+      <button class="btn btn-outline" onclick="toggleModify()">Annuler</button>
+    </div>
+    <div class="log hidden" id="logModify" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- Étape 3 : Succès -->
+<div class="card hidden" id="step3">
+  <div class="success-icon">🎉</div>
+  <div class="success-title">PDF généré !</div>
+  <div class="success-sub" id="pdfPathLabel"></div>
+
+  <div class="divider"></div>
+
+  <!-- Choix principal -->
+  <div id="applyChoice">
+    <div class="question">Que veux-tu faire maintenant ?</div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" onclick="applyNow()">🚀 Postuler avec Claude</button>
+      <button class="btn btn-outline" onclick="applyLater()">⏳ Postuler plus tard</button>
+    </div>
+  </div>
+
+  <!-- Résultat -->
+  <div id="applyResult" class="hidden" style="margin-top:16px;"></div>
+
+  <div class="btn-row" style="justify-content:center; margin-top:20px;">
+    <button class="btn btn-outline" onclick="resetToStep1()">← Nouvelle candidature</button>
+  </div>
+</div>
+
+<script>
+  let state = { entreprise: '', poste: '', jobUrl: '', pdfPath: '', folderPath: '', preview: '' };
+
+  let pasteMode = false;
+
+  function togglePasteMode(forceOpen = false) {
+    pasteMode = forceOpen || !pasteMode;
+    document.getElementById('pasteZone').classList.toggle('hidden', !pasteMode);
+    document.getElementById('jobUrl').style.opacity = pasteMode ? '0.4' : '1';
+  }
+
+  function log(msg) {
+    const el = document.getElementById('log');
+    el.style.display = 'block';
+    el.textContent += msg + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function setStep(n) {
+    ['s1','s2','s3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.classList.remove('active','done');
+      if (i + 1 < n) el.classList.add('done');
+      if (i + 1 === n) el.classList.add('active');
+    });
+    document.getElementById('step1').classList.toggle('hidden', n !== 1);
+    document.getElementById('step2').classList.toggle('hidden', n !== 2);
+    document.getElementById('step3').classList.toggle('hidden', n !== 3);
+  }
+
+  function resetToStep1() {
+    document.getElementById('log').textContent = '';
+    document.getElementById('log').style.display = 'none';
+    document.getElementById('btnGenerate').disabled = false;
+    document.getElementById('btnGenerate').textContent = '✨ Adapter le CV';
+    document.getElementById('applyChoice').classList.remove('hidden');
+    document.getElementById('applyResult').classList.add('hidden');
+    setStep(1);
+  }
+
+  async function startGeneration() {
+    const url     = document.getElementById('jobUrl').value.trim();
+    const jdText  = document.getElementById('jdText').value.trim();
+
+    if (!url && !jdText) return alert("Entre une URL ou colle le texte de l'offre.");
+
+    state.jobUrl = url;
+    const btn = document.getElementById('btnGenerate');
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération en cours...';
+    document.getElementById('log').textContent = '';
+
+    const params = new URLSearchParams({ url: url || '' });
+    if (jdText) params.set('jdText', jdText);
+
+    const es = new EventSource(`/api/generate?${params.toString()}`);
+
+    es.addEventListener('progress', e => {
+      const d = JSON.parse(e.data);
+      log(`[${d.step}/3] ${d.message}`);
+    });
+
+    es.addEventListener('token', () => {
+      // juste pour indiquer activité
+    });
+
+    es.addEventListener('done', e => {
+      es.close();
+      const d = JSON.parse(e.data);
+      state.entreprise  = d.entreprise;
+      state.poste       = d.poste;
+      state.preview     = d.preview;
+      state.folderPath  = d.folderPath || '';
+      log(`✅ CV adapté pour ${d.entreprise} — ${d.poste}`);
+      document.getElementById('preview').textContent = d.preview;
+      setStep(2);
+    });
+
+    es.addEventListener('error', e => {
+      es.close();
+      btn.disabled = false;
+      btn.textContent = '✨ Adapter le CV';
+      try {
+        const d = JSON.parse(e.data);
+        log(`❌ ${d.message}`);
+        if (d.fetchFailed) {
+          log('👉 Colle le texte de l\'offre ci-dessous et relance.');
+          togglePasteMode(true);
+          document.getElementById('jdText').focus();
+        }
+      } catch {
+        log('❌ Erreur de connexion au serveur.');
+      }
+    });
+  }
+
+  async function generatePdf() {
+    const btn = document.getElementById('btnPdf');
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération du PDF...';
+
+    try {
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entreprise: state.entreprise, poste: state.poste, folderPath: state.folderPath }),
+        signal: AbortSignal.timeout(120000),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        state.pdfPath    = data.pdfPath;
+        state.folderPath = data.folderPath || state.folderPath;
+        document.getElementById('pdfPathLabel').textContent = `📁 ${data.pdfPath}`;
+        setStep(3);
+      } else {
+        alert(`Erreur PDF : ${data.message}`);
+        btn.disabled = false;
+        btn.textContent = '📄 Générer le PDF';
+      }
+    } catch (err) {
+      const msg = err.name === 'TimeoutError'
+        ? 'Timeout : la génération PDF a pris trop de temps. Réessaie.'
+        : `Erreur connexion : ${err.message}`;
+      alert(msg);
+      btn.disabled = false;
+      btn.textContent = '📄 Générer le PDF';
+    }
+  }
+
+  function toggleModify() {
+    const zone = document.getElementById('modifyZone');
+    zone.classList.toggle('hidden');
+    if (!zone.classList.contains('hidden')) {
+      document.getElementById('modifyInput').focus();
+    }
+  }
+
+  async function applyModification() {
+    const instruction = document.getElementById('modifyInput').value.trim();
+    if (!instruction) return alert('Décris la modification souhaitée.');
+
+    const btn = document.getElementById('btnModify');
+    btn.disabled = true;
+    btn.textContent = '⏳ Modification en cours...';
+
+    const logEl = document.getElementById('logModify');
+    logEl.classList.remove('hidden');
+    logEl.textContent = '';
+
+    const currentPreview = document.getElementById('preview').textContent;
+
+    const es = new EventSource(`/api/modify?instruction=${encodeURIComponent(instruction)}&preview=${encodeURIComponent(currentPreview)}&url=${encodeURIComponent(state.jobUrl)}`);
+
+    es.addEventListener('progress', e => {
+      const d = JSON.parse(e.data);
+      logEl.textContent += d.message + '\n';
+    });
+
+    es.addEventListener('done', e => {
+      es.close();
+      const d = JSON.parse(e.data);
+      document.getElementById('preview').textContent = d.preview;
+      document.getElementById('modifyInput').value = '';
+      document.getElementById('modifyZone').classList.add('hidden');
+      logEl.classList.add('hidden');
+      btn.disabled = false;
+      btn.textContent = '✨ Appliquer les modifications';
+    });
+
+    es.addEventListener('error', e => {
+      es.close();
+      try { logEl.textContent += '❌ ' + JSON.parse(e.data).message; } catch { logEl.textContent += '❌ Erreur.'; }
+      btn.disabled = false;
+      btn.textContent = '✨ Appliquer les modifications';
+    });
+  }
+
+  async function applyLater() {
+    document.getElementById('applyChoice').classList.add('hidden');
+    const res = await fetch('/api/candidature', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entreprise: state.entreprise, poste: state.poste, url: state.jobUrl, statut: 'À envoyer', folderPath: state.folderPath }),
+    });
+    const data = await res.json();
+    const box = document.getElementById('applyResult');
+    box.classList.remove('hidden');
+    if (data.ok) {
+      box.innerHTML = `
+      <button class="btn btn-primary" onclick="applyNow()">🚀 Postuler maintenant ?</button>
+        <br><br>
+        <div class="result-box pending">📋 Candidature enregistrée — statut : <strong>À envoyer</strong></div>
+        <div class="btn-row" style="justify-content:center;margin-top:12px;">
+          <button class="btn btn-outline" onclick="openTracker()">📊 Voir le tableau de suivi</button>
+        </div>`;
+    } else {
+      box.innerHTML = `<div class="result-box error">❌ Erreur : ${data.message}</div>
+        <div class="btn-row" style="justify-content:center;margin-top:12px;">
+          <button class="btn btn-outline" onclick="retryApplyLater()">Réessayer</button>
+        </div>`;
+    }
+  }
+
+  function retryApplyLater() {
+    document.getElementById('applyChoice').classList.remove('hidden');
+    document.getElementById('applyResult').classList.add('hidden');
+  }
+
+  async function applyNow() {
+    document.getElementById('applyChoice').classList.add('hidden');
+    const box = document.getElementById('applyResult');
+    box.classList.remove('hidden');
+    box.innerHTML = `<div class="result-box pending">⏳ Ouverture de Chrome et copie du prompt...</div>`;
+
+    // Copier le prompt silencieusement en parallèle
+    await copyPrompt(true);
+
+    const res = await fetch('/api/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entreprise: state.entreprise, poste: state.poste, url: state.jobUrl, pdfPath: state.pdfPath, folderPath: state.folderPath }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      box.innerHTML = `
+        <div class="result-box success">
+          🚀 Chrome ouvert sur l'offre — statut : <strong>En cours</strong><br>
+          <span style="font-size:12px;font-weight:400;margin-top:6px;display:block;">
+            📋 Prompt copié — ouvre <strong>Claude in Chrome</strong> sur cette page et colle
+            <kbd style="background:#c8eeeb;padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace;">Ctrl+V</kbd>
+          </span>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:12px;">
+          <button class="btn btn-outline" id="btnCopyPrompt" onclick="copyPrompt()">📋 Recopier le prompt</button>
+          <button class="btn btn-purple" id="btnMarkPosted" onclick="markPosted()">✅ J'ai postulé</button>
+          <button class="btn btn-outline" onclick="openTracker()">📊 Tableau de suivi</button>
+        </div>`;
+    } else {
+      box.innerHTML = `<div class="result-box error">❌ Erreur : ${data.message}</div>
+        <div class="btn-row" style="justify-content:center;margin-top:12px;">
+          <button class="btn btn-primary" onclick="applyNow()">Réessayer</button>
+        </div>`;
+    }
+  }
+
+  async function openTracker() {
+    await fetch('/api/open-tracker', { method: 'POST' });
+  }
+
+  async function markPosted() {
+    const btn = document.getElementById('btnMarkPosted');
+    btn.disabled = true;
+    btn.textContent = '⏳ Mise à jour...';
+
+    const res = await fetch('/api/mark-posted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entreprise: state.entreprise, poste: state.poste }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      btn.textContent = '✅ Statut mis à jour — Postulé !';
+      btn.style.background = 'var(--cyan)';
+      btn.disabled = true;
+    } else {
+      btn.textContent = '✅ J\'ai postulé';
+      btn.disabled = false;
+      alert(`Erreur : ${data.message}`);
+    }
+  }
+
+  async function copyPrompt(silent = false) {
+    const prompt = `Remplis ma candidature pour le poste de ${state.poste} chez ${state.entreprise}.
+
+URL du formulaire : ${state.jobUrl}
+
+Pour l'upload du CV, le fichier PDF est à ce chemin local :
+${state.pdfPath}
+
+Voici le contenu complet de mon CV adapté à cette offre :
+${'═'.repeat(55)}
+${state.preview}
+${'═'.repeat(55)}
+
+Instructions :
+1. Navigue vers l'URL du formulaire
+2. Identifie tous les champs et montre-moi un résumé avant de remplir
+3. Utilise mes infos personnelles depuis cv.md (nom, email, téléphone, LinkedIn)
+4. Pour le champ upload CV, utilise le chemin PDF ci-dessus
+5. Propose une lettre de motivation courte si un champ le demande
+6. Montre-moi un screenshot de vérification avant de soumettre
+7. Attends ma confirmation avant de cliquer "Envoyer"`;
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      if (!silent) {
+        const btn = document.getElementById('btnCopyPrompt');
+        if (btn) {
+          btn.textContent = '✅ Copié !';
+          btn.style.background = 'var(--purple)';
+          setTimeout(() => {
+            btn.textContent = '📋 Recopier le prompt';
+            btn.style.background = '';
+          }, 2500);
+        }
+      }
+    } catch {
+      if (!silent) alert('Impossible de copier automatiquement.');
+    }
+  }
+</script>
+
+<!-- Dev shortcuts -->
+<div style="position:fixed;bottom:16px;right:16px;display:flex;gap:8px;opacity:0.35;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.35'">
+  <button onclick="devStep(1)" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#555;">→ Step 1</button>
+  <button onclick="devStep(2)" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#555;">→ Step 2</button>
+  <button onclick="devStep(3)" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#555;">→ Step 3</button>
+</div>
+<script>
+  function devStep(n) {
+    state = { entreprise: 'Test Corp', poste: 'Data Analyst', jobUrl: 'https://example.com/offre-test' };
+    if (n === 1) {
+      setStep(1);
+    } else
+    if (n === 2) {
+      document.getElementById('preview').textContent = '═══════════════════════════════════════════\nHamza Riabi\n06 XX XX XX XX | hamza@email.com | linkedin.com/in/hamza | Paris\n═══════════════════════════════════════════\n\nRÉSUMÉ PROFESSIONNEL\nÉtudiant en Master MIAGE à Paris Dauphine, avec une solide expérience en analyse de données et reporting. Actuellement en alternance chez Renault Group en tant que Data Analyst. Je recherche un contrat CDI à partir d\'octobre 2026.\n\nCOMPÉTENCES CLÉS\nAnalyse de données · SQL · Power BI · Python · ETL · Data Warehouse\n\nEXPÉRIENCE\nRenault Group — Data Analyst (2023–présent)\n  • Conception de dashboards Power BI suivis par 3 équipes métier\n  • Automatisation de pipelines ETL réduisant le temps de traitement de 40%\n  • Modélisation de données pour Test Corp (pipeline NiFi → PostgreSQL)\n\nPROJETS\nProjet Data Warehouse\n  Migration et optimisation d\'un entrepôt de données SQL Server\n  SQL, dbt, Airflow\n═══════════════════════════════════════════';
+      setStep(2);
+    } else if (n === 3) {
+      document.getElementById('pdfPathLabel').textContent = '📁 C:\\cv-gen\\output\\cv-hamza-test-corp-2026-05-11.pdf';
+      setStep(3);
+    }
+  }
+</script>
+</body>
+</html>

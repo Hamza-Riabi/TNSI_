@@ -1,0 +1,17 @@
+{
+  "name": "cv-gen",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Génération de CV PDF ATS-optimisé via Claude Code",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
+    "@google/generative-ai": "^0.24.1",
+    "docx": "^9.7.0",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "playwright": "^1.52.0",
+    "sharp": "^0.34.5",
+    "xlsx-populate": "^1.21.0"
+  }
+}
