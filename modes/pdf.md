@@ -106,7 +106,7 @@ Le CV **doit tenir sur exactement une page**. `generate-pdf.mjs` réduit automat
 Structure **fixe** — ne pas reformuler, ne pas réordonner les phrases :
 
 ```
-Spécialiste Data avec un parcours Master {MASTER} à l'Université Paris Dauphine, disposant d’une expérience en {COMPETENCES}. Actuellement en alternance chez Renault Group en tant que Data Analyst.Je recherche un contrat CDI à partir d'octobre 2026.
+Spécialiste Data avec un parcours Master {MASTER} à l'Université Paris Dauphine, disposant d’une expérience en {COMPETENCES}. Actuellement chez Renault Group en tant que Data Analyst.
 ```
 
 | Variable | Règle |

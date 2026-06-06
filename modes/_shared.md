@@ -7,7 +7,7 @@
 | `cv.md` | CV source — seule source de vérité |
 | `modes/_profile.md` | Rôles cibles, narrative, framing par archétype |
 
-
+f
 
 
 ---

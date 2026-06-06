@@ -386,8 +386,11 @@
     document.getElementById('log').style.display = 'none';
     document.getElementById('btnGenerate').disabled = false;
     document.getElementById('btnGenerate').textContent = '✨ Adapter le CV';
+    document.getElementById('btnPdf').disabled = false;
+    document.getElementById('btnPdf').textContent = '📄 Générer le PDF';
     document.getElementById('applyChoice').classList.remove('hidden');
     document.getElementById('applyResult').classList.add('hidden');
+    state = { entreprise: '', poste: '', jobUrl: '', pdfPath: '', folderPath: '', preview: '' };
     setStep(1);
   }
 
@@ -503,7 +506,7 @@
 
     const currentPreview = document.getElementById('preview').textContent;
 
-    const es = new EventSource(`/api/modify?instruction=${encodeURIComponent(instruction)}&preview=${encodeURIComponent(currentPreview)}&url=${encodeURIComponent(state.jobUrl)}`);
+    const es = new EventSource(`/api/modify?instruction=${encodeURIComponent(instruction)}&preview=${encodeURIComponent(currentPreview)}&url=${encodeURIComponent(state.jobUrl)}&folderPath=${encodeURIComponent(state.folderPath)}`);
 
     es.addEventListener('progress', e => {
       const d = JSON.parse(e.data);
@@ -514,6 +517,7 @@
       es.close();
       const d = JSON.parse(e.data);
       document.getElementById('preview').textContent = d.preview;
+      state.preview = d.preview;
       document.getElementById('modifyInput').value = '';
       document.getElementById('modifyZone').classList.add('hidden');
       logEl.classList.add('hidden');

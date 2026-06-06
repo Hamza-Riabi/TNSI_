@@ -157,7 +157,7 @@ Adapte le CV à cette offre en suivant toutes les règles du system prompt(n'inj
 Retourne UNIQUEMENT un objet JSON valide avec exactement ces clés :
 {
   "entreprise": "nom de l'entreprise",
-  "poste": "intitulé exact du poste",
+  "poste": "intitulé du poste COPIÉ MOT POUR MOT depuis l'offre, sans reformulation ni traduction ni abréviation",
   "preview": "le CV complet en texte brut (format section par section)",
   "html": "le HTML complet du CV avec tous les placeholders remplacés"
 }
@@ -191,8 +191,8 @@ Ne mets rien avant ni après le JSON.`;
     await mkdir(folderPath, { recursive: true });
     await writeFile(resolve(folderPath, 'jd.txt'), jd, 'utf-8');
 
-    // Sauvegarder le HTML généré
-    const htmlPath = resolve(__dirname, 'preview.html');
+    // Sauvegarder le HTML dans le dossier de la candidature
+    const htmlPath = resolve(folderPath, 'preview.html');
     await writeFile(htmlPath, parsed.html, 'utf-8');
 
     sse(res, 'done', {
@@ -215,7 +215,7 @@ Ne mets rien avant ni après le JSON.`;
 // GET /api/modify — Applique des modifications au CV (SSE stream)
 // =====================================================================
 app.get('/api/modify', async (req, res) => {
-  const { instruction, preview, url } = req.query;
+  const { instruction, preview, url, folderPath } = req.query;
   if (!instruction || !preview) return res.status(400).end();
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -250,7 +250,7 @@ Applique uniquement cette modification, garde le RESTE IDENTIQUE.
 Retourne UNIQUEMENT un objet JSON valide avec exactement ces clés :
 {
   "entreprise": "nom de l'entreprise",
-  "poste": "intitulé exact du poste",
+  "poste": "intitulé du poste COPIÉ MOT POUR MOT depuis l'offre, sans reformulation ni traduction ni abréviation",
   "preview": "le CV complet mis à jour en texte brut",
   "html": "le HTML complet mis à jour"
 }
@@ -262,7 +262,10 @@ Ne mets rien avant ni après le JSON.`;
     if (!jsonMatch) throw new Error('Réponse invalide');
     const parsed = JSON.parse(jsonMatch[0]);
 
-    await writeFile(resolve(__dirname, 'preview.html'), parsed.html, 'utf-8');
+    const htmlPath = folderPath
+      ? resolve(folderPath, 'preview.html')
+      : resolve(__dirname, 'preview.html');
+    await writeFile(htmlPath, parsed.html, 'utf-8');
 
     sse(res, 'done', {
       preview: parsed.preview,
@@ -289,9 +292,10 @@ app.post('/api/pdf', async (req, res) => {
   const folder = folderPath || resolve(__dirname, 'output');
   await mkdir(folder, { recursive: true });
   const pdfPath = resolve(folder, 'cv-hamza.pdf');
+  const previewHtmlPath = resolve(folder, 'preview.html');
 
   try {
-    await execAsync(`node generate-pdf.mjs preview.html "${pdfPath}" --format=a4`, { cwd: __dirname });
+    await execAsync(`node generate-pdf.mjs "${previewHtmlPath}" "${pdfPath}" --format=a4`, { cwd: __dirname });
     res.json({ ok: true, pdfPath, folderPath: folder });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });

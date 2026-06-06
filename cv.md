@@ -10,12 +10,12 @@ candidate:
 
 ## Profil
 
-Étudiant en Master MIAGE à l'Université Paris Dauphine, avec une solide expérience en analyse de données, pipelines big data et développement IA. Actuellement en alternance chez Renault Group en tant que Data Analyst.Recherche un contrat CDI à partir d'octobre 2026.
+Étudiant en Master MIAGE à l'Université Paris Dauphine, avec une solide expérience en analyse de données, pipelines big data et développement IA. Actuellement chez Renault Group en tant que Data Analyst.Recherche un contrat CDI à partir d'octobre 2026.
 
 ## Expériences Professionnelles
 
 ### Renault Group -- Paris, France
-**Data Analyst (Alternance)**
+**Data Analyst **
 Sept. 2024 – Sept. 2026
 
 - Extraction et traitement des données issues du datalake d'entreprise
@@ -24,7 +24,7 @@ Sept. 2024 – Sept. 2026
 - Gestion des incidents techniques liés aux bases de données
 
 ### 3D Smartfactory -- Paris, France
-**Data & IA Business Analyst (Stage)**
+**Data & IA Business Analyst **
 Avr. 2024 – Août 2024
 
 - Conception d'un modèle IA pour traiter et analyser les CVs, améliorant l'adéquation candidat-poste de 30%
@@ -32,7 +32,7 @@ Avr. 2024 – Août 2024
 - Produit final déployé en production : [3dsmart.vercel.app](https://3dsmart.vercel.app)
 
 ### 3D Smartfactory -- Paris, France
-**Chef de Projet Data (Stage)**
+**Chef de Projet Data **
 Juin 2023 – Oct. 2023
 
 - Rédaction de cahiers des charges et suivi des délais et budgets
